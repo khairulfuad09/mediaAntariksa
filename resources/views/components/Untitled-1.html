@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Shooter - Level Progression</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            cursor: none;
+            font-family: 'Arial', sans-serif;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #player {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 70,50 50,70 30,50" fill="cyan" stroke="white" stroke-width="2"/></svg>');
+            background-size: contain;
+            z-index: 10;
+            pointer-events: none;
+            transition: transform 0.1s;
+        }
+        .enemy {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-size: contain;
+            z-index: 5;
+        }
+        .enemy.type1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="red" stroke="yellow" stroke-width="3"/></svg>');
+        }
+        .enemy.type2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" fill="purple" stroke="pink" stroke-width="3"/></svg>');
+        }
+        .enemy.type3 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 90,90 10,90" fill="orange" stroke="yellow" stroke-width="3"/></svg>');
+        }
+        .boss {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="darkred"/><circle cx="50" cy="50" r="35" fill="red"/><circle cx="50" cy="50" r="25" fill="darkred"/><circle cx="50" cy="50" r="15" fill="maroon"/></svg>');
+            background-size: contain;
+            z-index: 7;
+        }
+        .bullet {
+            position: absolute;
+            width: 5px;
+            height: 15px;
+            background-color: yellow;
+            z-index: 8;
+            border-radius: 2px;
+        }
+        .laser {
+            position: absolute;
+            width: 3px;
+            height: 30px;
+            background: linear-gradient(to top, cyan, white);
+            z-index: 8;
+            border-radius: 2px;
+        }
+        .bomb {
+            position: absolute;
+            width: 10px;
+            height: 20px;
+            background: radial-gradient(circle at center, orange, red);
+            z-index: 8;
+            border-radius: 50% 50% 20% 20%;
+        }
+        .enemy-bullet {
+            position: absolute;
+            width: 5px;
+            height: 15px;
+            background-color: #ff5555;
+            z-index: 8;
+            border-radius: 2px;
+        }
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: white;
+            border-radius: 50%;
+        }
+        .powerup {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .health-up {
+            background: radial-gradient(circle at center, #00ff00, #009900);
+        }
+        .weapon-up {
+            background: radial-gradient(circle at center, #ffff00, #ff9900);
+        }
+        .bomb-up {
+            background: radial-gradient(circle at center, #ff0000, #990000);
+        }
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            z-index: 20;
+            text-shadow: 0 0 3px #00ffff;
+        }
+        #level-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            z-index: 20;
+            text-shadow: 0 0 5px #ff00ff;
+        }
+        #boss-health {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 20px;
+            background-color: #333;
+            border: 2px solid #fff;
+            z-index: 20;
+            display: none;
+        }
+        #boss-health-bar {
+            height: 100%;
+            width: 100%;
+            background-color: #ff0000;
+            transition: width 0.3s;
+        }
+        .explosion {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="orange" /></svg>');
+            background-size: contain;
+            z-index: 15;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="player"></div>
+        <div id="hud">
+            <div>Health: <span id="health">100</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Weapon: <span id="weapon-type">Normal</span></div>
+            <div>Bombs: <span id="bomb-count">3</span></div>
+        </div>
+        <div id="level-display">Level 1</div>
+        <div id="boss-health">
+            <div id="boss-health-bar"></div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            level: 1,
+            score: 0,
+            health: 100,
+            maxHealth: 100,
+            weaponType: 'normal', // normal, laser, rapid
+            bombCount: 3,
+            isBossFight: false,
+            gameRunning: true,
+            playerInvincible: false
+        };
+
+        // Game elements
+        const elements = {
+            container: document.getElementById('game-container'),
+            player: document.getElementById('player'),
+            healthDisplay: document.getElementById('health'),
+            scoreDisplay: document.getElementById('score'),
+            weaponDisplay: document.getElementById('weapon-type'),
+            bombDisplay: document.getElementById('bomb-count'),
+            levelDisplay: document.getElementById('level-display'),
+            bossHealthBar: document.getElementById('boss-health'),
+            bossHealthFill: document.getElementById('boss-health-bar')
+        };
+
+        // Game objects
+        const gameObjects = {
+            bullets: [],
+            enemyBullets: [],
+            enemies: [],
+            stars: [],
+            explosions: [],
+            powerups: [],
+            bosses: []
+        };
+
+        // Game settings
+        const settings = {
+            gameWidth: window.innerWidth,
+            gameHeight: window.innerHeight,
+            mouseX: window.innerWidth / 2,
+            mouseY: window.innerHeight - 100,
+            lastShotTime: 0,
+            shotDelays: {
+                normal: 300,
+                laser: 500,
+                rapid: 100
+            },
+            enemySpawnRate: 1000,
+            lastEnemySpawn: 0,
+            lastPowerupSpawn: 0,
+            powerupSpawnInterval: 15000
+        };
+
+        // Level configurations
+        const levels = {
+            1: {
+                enemyTypes: ['type1'],
+                enemyHealth: 1,
+                enemySpeed: 1,
+                enemyFireRate: 0.3,
+                spawnRate: 1500,
+                requiredScore: 500,
+                bossHealth: 0
+            },
+            2: {
+                enemyTypes: ['type1', 'type2'],
+                enemyHealth: 1,
+                enemySpeed: 1.2,
+                enemyFireRate: 0.4,
+                spawnRate: 1200,
+                requiredScore: 1000,
+                bossHealth: 0
+            },
+            3: {
+                enemyTypes: ['type1', 'type2', 'type3'],
+                enemyHealth: 2,
+                enemySpeed: 1.5,
+                enemyFireRate: 0.5,
+                spawnRate: 1000,
+                requiredScore: 2000,
+                bossHealth: 50
+            },
+            4: {
+                enemyTypes: ['type2', 'type3'],
+                enemyHealth: 3,
+                enemySpeed: 1.8,
+                enemyFireRate: 0.6,
+                spawnRate: 800,
+                requiredScore: 4000,
+                bossHealth: 100
+            },
+            5: {
+                enemyTypes: ['type3'],
+                enemyHealth: 5,
+                enemySpeed: 2,
+                enemyFireRate: 0.7,
+                spawnRate: 600,
+                requiredScore: 8000,
+                bossHealth: 200
+            }
+        };
+
+        // Initialize game
+        function initGame() {
+            createStars();
+            updateHUD();
+
+            // Event listeners
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mousedown', handleMouseClick);
+            document.addEventListener('keydown', handleKeyPress);
+
+            // Start game loop
+            gameLoop();
+        }
+
+        // Create background stars
+        function createStars() {
+            for (let i = 0; i < 300; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = `${Math.random() * settings.gameWidth}px`;
+                star.style.top = `${Math.random() * settings.gameHeight}px`;
+                star.style.opacity = Math.random();
+                star.style.width = `${Math.random() * 3 + 1}px`;
+                star.style.height = star.style.width;
+                elements.container.appendChild(star);
+                gameObjects.stars.push(star);
+
+                // Animate stars
+                anime({
+                    targets: star,
+                    opacity: [star.style.opacity, Math.random()],
+                    duration: Math.random() * 2000 + 1000,
+                    direction: 'alternate',
+                    loop: true,
+                    easing: 'easeInOutSine'
+                });
+            }
+        }
+
+        // Handle mouse movement
+        function handleMouseMove(e) {
+            settings.mouseX = e.clientX;
+            settings.mouseY = e.clientY;
+
+            // Limit player movement area
+            if (settings.mouseY > settings.gameHeight - 100) {
+                settings.mouseY = settings.gameHeight - 100;
+            }
+            if (settings.mouseY < settings.gameHeight - 300) {
+                settings.mouseY = settings.gameHeight - 300;
+            }
+        }
+
+        // Handle mouse click (shooting)
+        function handleMouseClick(e) {
+            if (!gameState.gameRunning) return;
+
+            const currentTime = Date.now();
+            const delay = settings.shotDelays[gameState.weaponType];
+
+            if (currentTime - settings.lastShotTime > delay) {
+                shoot();
+                settings.lastShotTime = currentTime;
+
+                // Rapid fire continues firing while mouse is down
+                if (gameState.weaponType === 'rapid') {
+                    gameState.rapidFireInterval = setInterval(() => {
+                        if (gameState.gameRunning) shoot();
+                    }, delay);
+                }
+            }
+        }
+
+        // Handle key press (bombs, etc)
+        function handleKeyPress(e) {
+            if (!gameState.gameRunning) return;
+
+            // Space bar - shoot
+            if (e.code === 'Space') {
+                e.preventDefault();
+                const currentTime = Date.now();
+                const delay = settings.shotDelays[gameState.weaponType];
+
+                if (currentTime - settings.lastShotTime > delay) {
+                    shoot();
+                    settings.lastShotTime = currentTime;
+                }
+            }
+            // B key - use bomb
+            else if (e.code === 'KeyB' && gameState.bombCount > 0) {
+                useBomb();
+            }
+        }
+
+        // Player shooting
+        function shoot() {
+            if (!gameState.gameRunning) return;
+
+            let bullet;
+            const bulletX = settings.mouseX - 2;
+            const bulletY = settings.mouseY - 15;
+
+            switch (gameState.weaponType) {
+                case 'laser':
+                    bullet = document.createElement('div');
+                    bullet.className = 'laser';
+                    bullet.style.left = `${bulletX}px`;
+                    bullet.style.top = `${bulletY}px`;
+                    elements.container.appendChild(bullet);
+
+                    // Laser pierces through enemies
+                    anime({
+                        targets: bullet,
+                        top: -30,
+                        duration: 800,
+                        easing: 'linear',
+                        complete: () => {
+                            bullet.remove();
+                            gameObjects.bullets = gameObjects.bullets.filter(b => b !== bullet);
+                        }
+                    });
+                    break;
+
+                case 'rapid':
+                    bullet = document.createElement('div');
+                    bullet.className = 'bullet';
+                    bullet.style.left = `${bulletX}px`;
+                    bullet.style.top = `${bulletY}px`;
+                    elements.container.appendChild(bullet);
+
+                    anime({
+                        targets: bullet,
+                        top: -15,
+                        duration: 700,
+                        easing: 'linear',
+                        complete: () => {
+                            bullet.remove();
+                            gameObjects.bullets = gameObjects.bullets.filter(b => b !== bullet);
+                        }
+                    });
+                    break;
+
+                default: // normal
+                    bullet = document.createElement('div');
+                    bullet.className = 'bullet';
+                    bullet.style.left = `${bulletX}px`;
+                    bullet.style.top = `${bulletY}px`;
+                    elements.container.appendChild(bullet);
+
+                    anime({
+                        targets: bullet,
+                        top: -15,
+                        duration: 1000,
+                        easing: 'linear',
+                        complete: () => {
+                            bullet.remove();
+                            gameObjects.bullets = gameObjects.bullets.filter(b => b !== bullet);
+                        }
+                    });
+            }
+
+            gameObjects.bullets.push(bullet);
+        }
+
+        // Use bomb (clear screen)
+        function useBomb() {
+            if (gameState.bombCount <= 0) return;
+
+            gameState.bombCount--;
+            updateHUD();
+
+            // Create explosion effect
+            const bomb = document.createElement('div');
+            bomb.className = 'bomb';
+            bomb.style.left = `${settings.mouseX - 5}px`;
+            bomb.style.top = `${settings.mouseY - 10}px`;
+            elements.container.appendChild(bomb);
+
+            anime({
+                targets: bomb,
+                scale: [1, 20],
+                opacity: [1, 0],
+                duration: 500,
+                easing: 'easeOutExpo',
+                complete: () => {
+                    bomb.remove();
+                }
+            });
+
+            // Destroy all enemies and enemy bullets
+            gameObjects.enemies.forEach(enemy => {
+                createExplosion(
+                    enemy.getBoundingClientRect().left + enemy.offsetWidth / 2,
+                    enemy.getBoundingClientRect().top + enemy.offsetHeight / 2
+                );
+                enemy.remove();
+                gameState.score += 10;
+            });
+
+            gameObjects.enemyBullets.forEach(bullet => {
+                bullet.remove();
+            });
+
+            gameObjects.enemies = [];
+            gameObjects.enemyBullets = [];
+
+            updateHUD();
+        }
+
+        // Spawn enemy
+        function spawnEnemy() {
+            if (!gameState.gameRunning || gameState.isBossFight) return;
+
+            const currentLevel = levels[gameState.level];
+            const enemyType = currentLevel.enemyTypes[Math.floor(Math.random() * currentLevel.enemyTypes.length)];
+
+            const enemy = document.createElement('div');
+            enemy.className = `enemy ${enemyType}`;
+            enemy.dataset.health = currentLevel.enemyHealth;
+            enemy.style.left = `${Math.random() * (settings.gameWidth - 40)}px`;
+            enemy.style.top = '-40px';
+            elements.container.appendChild(enemy);
+            gameObjects.enemies.push(enemy);
+
+            // Enemy movement
+            anime({
+                targets: enemy,
+                top: settings.gameHeight,
+                duration: Math.random() * 3000 + 2000 / currentLevel.enemySpeed,
+                easing: 'linear',
+                complete: () => {
+                    enemy.remove();
+                    gameObjects.enemies = gameObjects.enemies.filter(e => e !== enemy);
+                }
+            });
+
+            // Enemy shooting
+            if (Math.random() < currentLevel.enemyFireRate) {
+                const shootInterval = setInterval(() => {
+                    if (gameState.gameRunning && gameObjects.enemies.includes(enemy)) {
+                        enemyShoot(enemy);
+                    } else {
+                        clearInterval(shootInterval);
+                    }
+                }, Math.random() * 1500 + 1000);
+            }
+        }
+
+        // Enemy shooting
+        function enemyShoot(enemy) {
+            if (!gameState.gameRunning) return;
+
+            const enemyRect = enemy.getBoundingClientRect();
+            const enemyX = enemyRect.left + enemyRect.width / 2;
+            const enemyY = enemyRect.top + enemyRect.height;
+
+            const bullet = document.createElement('div');
+            bullet.className = 'enemy-bullet';
+            bullet.style.left = `${enemyX - 2}px`;
+            bullet.style.top = `${enemyY}px`;
+            elements.container.appendChild(bullet);
+            gameObjects.enemyBullets.push(bullet);
+
+            anime({
+                targets: bullet,
+                top: settings.gameHeight + 15,
+                duration: 1500,
+                easing: 'linear',
+                complete: () => {
+                    bullet.remove();
+                    gameObjects.enemyBullets = gameObjects.enemyBullets.filter(b => b !== bullet);
+                }
+            });
+        }
+
+        // Spawn boss
+        function spawnBoss() {
+            if (gameState.isBossFight || levels[gameState.level].bossHealth <= 0) return;
+
+            gameState.isBossFight = true;
+            const bossHealth = levels[gameState.level].bossHealth;
+
+            const boss = document.createElement('div');
+            boss.className = 'boss';
+            boss.dataset.health = bossHealth;
+            boss.style.left = `${settings.gameWidth / 2 - 50}px`;
+            boss.style.top = '-100px';
+            elements.container.appendChild(boss);
+            gameObjects.bosses.push(boss);
+
+            // Show boss health bar
+            elements.bossHealthBar.style.display = 'block';
+            elements.bossHealthFill.style.width = '100%';
+
+            // Boss entrance animation
+            anime({
+                targets: boss,
+                top: 50,
+                duration: 2000,
+                easing: 'easeOutElastic',
+                complete: () => {
+                    // Boss movement pattern
+                    const moveBoss = () => {
+                        if (!gameState.gameRunning || !gameObjects.bosses.includes(boss)) return;
+
+                        const newX = Math.random() * (settings.gameWidth - 100);
+                        anime({
+                            targets: boss,
+                            left: newX,
+                            duration: 2000,
+                            easing: 'easeInOutQuad',
+                            complete: moveBoss
+                        });
+                    };
+
+                    moveBoss();
+
+                    // Boss shooting
+                    const bossShoot = () => {
+                        if (!gameState.gameRunning || !gameObjects.bosses.includes(boss)) return;
+
+                        enemyShoot(boss);
+                        setTimeout(bossShoot, 800);
+                    };
+
+                    bossShoot();
+                }
+            });
+        }
+
+        // Spawn power-up
+        function spawnPowerup() {
+            if (!gameState.gameRunning || gameState.isBossFight) return;
+
+            const currentTime = Date.now();
+            if (currentTime - settings.lastPowerupSpawn < settings.powerupSpawnInterval) return;
+
+            settings.lastPowerupSpawn = currentTime;
+
+            const powerupTypes = ['health-up', 'weapon-up', 'bomb-up'];
+            const type = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+
+            const powerup = document.createElement('div');
+            powerup.className = `powerup ${type}`;
+            powerup.dataset.type = type;
+
+            // Set symbol based on type
+            let symbol = '';
+            if (type === 'health-up') symbol = 'H';
+            else if (type === 'weapon-up') symbol = 'W';
+            else if (type === 'bomb-up') symbol = 'B';
+
+            powerup.textContent = symbol;
+            powerup.style.left = `${Math.random() * (settings.gameWidth - 30)}px`;
+            powerup.style.top = '-30px';
+            elements.container.appendChild(powerup);
+            gameObjects.powerups.push(powerup);
+
+            // Powerup movement
+            anime({
+                targets: powerup,
+                top: settings.gameHeight,
+                duration: 5000,
+                easing: 'linear',
+                complete: () => {
+                    powerup.remove();
+                    gameObjects.powerups = gameObjects.powerups.filter(p => p !== powerup);
+                }
+            });
+        }
+
+        // Create explosion effect
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = `${x - 20}px`;
+            explosion.style.top = `${y - 20}px`;
+            elements.container.appendChild(explosion);
+            gameObjects.explosions.push(explosion);
+
+            anime({
+                targets: explosion,
+                scale: [0, 2],
+                opacity: [0, 1, 0],
+                duration: 500,
+                easing: 'easeOutExpo',
+                complete: () => {
+                    explosion.remove();
+                    gameObjects.explosions = gameObjects.explosions.filter(e => e !== explosion);
+                }
+            });
+        }
+
+        // Check collisions
+        function checkCollisions() {
+            // Player bullets hit enemies
+            gameObjects.bullets.forEach((bullet, bIndex) => {
+                // Check against regular enemies
+                gameObjects.enemies.forEach((enemy, eIndex) => {
+                    const bulletRect = bullet.getBoundingClientRect();
+                    const enemyRect = enemy.getBoundingClientRect();
+
+                    if (isColliding(bulletRect, enemyRect)) {
+                        // Damage enemy
+                        enemy.dataset.health--;
+
+                        // Create explosion
+                        createExplosion(
+                            enemyRect.left + enemyRect.width / 2,
+                            enemyRect.top + enemyRect.height / 2
+                        );
+
+                        // Remove bullet unless it's a laser
+                        if (!bullet.classList.contains('laser')) {
+                            bullet.remove();
+                            gameObjects.bullets.splice(bIndex, 1);
+                        }
+
+                        // Remove enemy if health <= 0
+                        if (enemy.dataset.health <= 0) {
+                            enemy.remove();
+                            gameObjects.enemies.splice(eIndex, 1);
+                            gameState.score += 20;
+                        } else {
+                            // Visual feedback for hit
+                            anime({
+                                targets: enemy,
+                                scale: [1, 1.2, 1],
+                                duration: 200,
+                                easing: 'easeOutExpo'
+                            });
+                        }
+
+                        updateHUD();
+                    }
+                });
+
+                // Check against boss
+                gameObjects.bosses.forEach((boss, bossIndex) => {
+                    const bulletRect = bullet.getBoundingClientRect();
+                    const bossRect = boss.getBoundingClientRect();
+
+                    if (isColliding(bulletRect, bossRect)) {
+                        // Damage boss
+                        boss.dataset.health--;
+
+                        // Update boss health bar
+                        const currentLevel = levels[gameState.level];
+                        const healthPercent = (boss.dataset.health / currentLevel.bossHealth) * 100;
+                        elements.bossHealthFill.style.width = `${healthPercent}%`;
+
+                        // Create explosion
+                        createExplosion(
+                            bulletRect.left + bulletRect.width / 2,
+                            bulletRect.top + bulletRect.height / 2
+                        );
+
+                        // Remove bullet unless it's a laser
+                        if (!bullet.classList.contains('laser')) {
+                            bullet.remove();
+                            gameObjects.bullets.splice(bIndex, 1);
+                        }
+
+                        // Check if boss defeated
+                        if (boss.dataset.health <= 0) {
+                            createExplosion(
+                                bossRect.left + bossRect.width / 2,
+                                bossRect.top + bossRect.height / 2
+                            );
+
+                            boss.remove();
+                            gameObjects.bosses.splice(bossIndex, 1);
+                            gameState.score += 500;
+                            gameState.isBossFight = false;
+                            elements.bossHealthBar.style.display = 'none';
+
+                            // Level up if score requirement met
+                            checkLevelUp();
+                        } else {
+                            // Visual feedback for hit
+                            anime({
+                                targets: boss,
+                                scale: [1, 1.1, 1],
+                                duration: 200,
+                                easing: 'easeOutExpo'
+                            });
+                        }
+
+                        updateHUD();
+                    }
+                });
+            });
+
+            // Enemy bullets hit player
+            if (!gameState.playerInvincible) {
+                const playerRect = elements.player.getBoundingClientRect();
+
+                gameObjects.enemyBullets.forEach((bullet, bIndex) => {
+                    const bulletRect = bullet.getBoundingClientRect();
+
+                    if (isColliding(bulletRect, playerRect)) {
+                        // Create explosion
+                        createExplosion(
+                            bulletRect.left + bulletRect.width / 2,
+                            bulletRect.top + bulletRect.height / 2
+                        );
+
+                        // Remove bullet
+                        bullet.remove();
+                        gameObjects.enemyBullets.splice(bIndex, 1);
+
+                        // Damage player
+                        gameState.health -= 10;
+                        updateHUD();
+
+                        // Make player temporarily invincible
+                        gameState.playerInvincible = true;
+                        elements.player.style.opacity = '0.5';
+
+                        setTimeout(() => {
+                            gameState.playerInvincible = false;
+                            elements.player.style.opacity = '1';
+                        }, 1000);
+
+                        // Check game over
+                        if (gameState.health <= 0) {
+                            gameOver();
+                        }
+                    }
+                });
+
+                // Enemy collision with player
+                gameObjects.enemies.forEach(enemy => {
+                    const enemyRect = enemy.getBoundingClientRect();
+
+                    if (isColliding(playerRect, enemyRect)) {
+                        // Create big explosion
+                        createExplosion(
+                            (playerRect.left + playerRect.right) / 2,
+                            (playerRect.top + playerRect.bottom) / 2
+                        );
+
+                        // Damage player
+                        gameState.health = 0;
+                        updateHUD();
+                        gameOver();
+                    }
+                });
+            }
+
+            // Player collects powerup
+            const playerRect = elements.player.getBoundingClientRect();
+
+            gameObjects.powerups.forEach((powerup, pIndex) => {
+                const powerupRect = powerup.getBoundingClientRect();
+
+                if (isColliding(playerRect, powerupRect)) {
+                    // Apply powerup effect
+                    const type = powerup.dataset.type;
+
+                    if (type === 'health-up') {
+                        gameState.health = Math.min(gameState.maxHealth, gameState.health + 30);
+                    } else if (type === 'weapon-up') {
+                        // Cycle through weapon types
+                        if (gameState.weaponType === 'normal') {
+                            gameState.weaponType = 'laser';
+                        } else if (gameState.weaponType === 'laser') {
+                            gameState.weaponType = 'rapid';
+                        } else {
+                            gameState.weaponType = 'normal';
+                        }
+
+                        // Clear any existing rapid fire interval
+                        if (gameState.rapidFireInterval) {
+                            clearInterval(gameState.rapidFireInterval);
+                        }
+                    } else if (type === 'bomb-up') {
+                        gameState.bombCount += 1;
+                    }
+
+                    // Visual feedback
+                    anime({
+                        targets: powerup,
+                        scale: [1, 1.5, 0],
+                        opacity: [1, 0],
+                        duration: 300,
+                        easing: 'easeOutExpo'
+                    });
+
+                    // Remove powerup
+                    powerup.remove();
+                    gameObjects.powerups.splice(pIndex, 1);
+
+                    updateHUD();
+                }
+            });
+        }
+
+        // Check collision between two rectangles
+        function isColliding(rect1, rect2) {
+            return (
+                rect1.left < rect2.right &&
+                rect1.right > rect2.left &&
+                rect1.top < rect2.bottom &&
+                rect1.bottom > rect2.top
+            );
+        }
+
+        // Check if player should level up
+        function checkLevelUp() {
+            const currentLevel = levels[gameState.level];
+
+            if (gameState.score >= currentLevel.requiredScore) {
+                if (gameState.level < 5) {
+                    gameState.level++;
+                    elements.levelDisplay.textContent = `Level ${gameState.level}`;
+
+                    // Increase player max health every level
+                    gameState.maxHealth += 20;
+                    gameState.health = gameState.maxHealth;
+
+                    // Reset weapon to normal
+                    gameState.weaponType = 'normal';
+                    if (gameState.rapidFireInterval) {
+                        clearInterval(gameState.rapidFireInterval);
+                    }
+
+                    updateHUD();
+
+                    // Show level up message
+                    const message = document.createElement('div');
+                    message.textContent = `LEVEL ${gameState.level}!`;
+                    message.style.position = 'absolute';
+                    message.style.left = '50%';
+                    message.style.top = '50%';
+                    message.style.transform = 'translate(-50%, -50%)';
+                    message.style.color = 'white';
+                    message.style.fontSize = '48px';
+                    message.style.textShadow = '0 0 10px cyan';
+                    message.style.zIndex = '30';
+                    elements.container.appendChild(message);
+
+                    anime({
+                        targets: message,
+                        scale: [0, 1.5, 1],
+                        opacity: [0, 1, 0],
+                        duration: 2000,
+                        easing: 'easeOutExpo',
+                        complete: () => {
+                            message.remove();
+                        }
+                    });
+
+                    // Check if should spawn boss for this level
+                    if (levels[gameState.level].bossHealth > 0) {
+                        setTimeout(spawnBoss, 2000);
+                    }
+                } else {
+                    // Game completed
+                    gameCompleted();
+                }
+            }
+        }
+
+        // Update HUD display
+        function updateHUD() {
+            elements.healthDisplay.textContent = gameState.health;
+            elements.scoreDisplay.textContent = gameState.score;
+            elements.bombDisplay.textContent = gameState.bombCount;
+
+            // Update weapon display
+            let weaponName = '';
+            if (gameState.weaponType === 'normal') weaponName = 'Normal';
+            else if (gameState.weaponType === 'laser') weaponName = 'Laser';
+            else if (gameState.weaponType === 'rapid') weaponName = 'Rapid Fire';
+
+            elements.weaponDisplay.textContent = weaponName;
+        }
+
+        // Game over
+        function gameOver() {
+            gameState.gameRunning = false;
+
+            // Player explosion
+            anime({
+                targets: elements.player,
+                rotate: 360,
+                scale: 0,
+                duration: 1000,
+                easing: 'easeInOutExpo'
+            });
+
+            // Stop all enemy animations
+            gameObjects.enemies.forEach(enemy => {
+                anime.remove(enemy);
+                enemy.remove();
+            });
+
+            gameObjects.bosses.forEach(boss => {
+                anime.remove(boss);
+                boss.remove();
+            });
+
+            // Show game over message
+            setTimeout(() => {
+                alert(`Game Over! Final Score: ${gameState.score}`);
+                location.reload();
+            }, 1000);
+        }
+
+        // Game completed
+        function gameCompleted() {
+            gameState.gameRunning = false;
+
+            // Celebration animation
+            anime({
+                targets: elements.player,
+                scale: [1, 1.5],
+                rotate: 360,
+                duration: 2000,
+                easing: 'easeInOutExpo'
+            });
+
+            // Show victory message
+            setTimeout(() => {
+                alert(`Congratulations! You completed all levels with a score of ${gameState.score}`);
+                location.reload();
+            }, 2000);
+        }
+
+        // Main game loop
+        function gameLoop() {
+            if (!gameState.gameRunning) return;
+
+            // Update player position
+            elements.player.style.left = `${settings.mouseX - 25}px`;
+            elements.player.style.top = `${settings.mouseY - 25}px`;
+
+            // Spawn enemies
+            const currentTime = Date.now();
+            const currentLevel = levels[gameState.level];
+
+            if (currentTime - settings.lastEnemySpawn > currentLevel.spawnRate) {
+                spawnEnemy();
+                settings.lastEnemySpawn = currentTime;
+            }
+
+            // Spawn powerups
+            spawnPowerup();
+
+            // Check collisions
+            checkCollisions();
+
+            // Check level up
+            checkLevelUp();
+
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize game when window loads
+        window.onload = initGame;
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            settings.gameWidth = window.innerWidth;
+            settings.gameHeight = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
