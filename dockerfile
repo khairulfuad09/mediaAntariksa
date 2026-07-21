@@ -1,19 +1,21 @@
 FROM richarvey/nginx-php-fpm:latest
 
-# Copy seluruh file project
+# Copy seluruh file proyek
 COPY . /var/www/html
 
-# Atur Nginx Document Root & enable URL Rewriting Laravel
+# Overwrite konfigurasi Nginx dengan file site.conf milik kita
+COPY site.conf /etc/nginx/sites-available/default.conf
+
+# Environment variables
 ENV WEBROOT="/var/www/html/public"
 ENV PHP_ERRORS_STDERR="1"
 ENV ERRORS="1"
 ENV APP_ENV="production"
-ENV NGINX_CONF_INCLUDE="laravel"
 
-# Install composer dependencies
+# Install dependencies composer
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# Set permission folder storage & cache agar Laravel bisa buat session/login
+# Set izin akses folder storage dan bootstrap cache
 RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
