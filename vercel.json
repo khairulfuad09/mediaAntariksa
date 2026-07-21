@@ -1,9 +1,8 @@
 {
   "version": 2,
-  "framework": null,
   "functions": {
     "api/index.php": {
-      "runtime": "vercel-php@0.7.3"
+      "runtime": "vercel-php@0.6.0"
     }
   },
   "routes": [
@@ -40,7 +39,6 @@
     "DB_PASSWORD": "sD5BRd0SrN0MTcSHVdSk",
     "SESSION_DRIVER": "cookie",
     "SESSION_LIFETIME": "120",
-    "SESSION_ENCRYPT": "false",
     "CACHE_STORE": "array",
     "FILESYSTEM_DISK": "local",
     "QUEUE_CONNECTION": "sync"
