@@ -25,11 +25,30 @@
     }
   ],
   "env": {
+    "APP_NAME": "Media Antariksa",
     "APP_ENV": "production",
+    "APP_KEY": "base64:W4YC0OD99Tk23jGvPC7GiJWZtHBKF21vh+qN3dMalkw=",
     "APP_DEBUG": "true",
-    "VIEW_COMPILED_PATH": "/tmp",
+    "APP_URL": "https://media-antariksa.vercel.app",
+    "LOG_CHANNEL": "stderr",
+    "LOG_LEVEL": "debug",
+    "DB_CONNECTION": "mysql",
+    "DB_HOST": "bplkwt6orhq6w1agaool-mysql.services.clever-cloud.com",
+    "DB_PORT": "3306",
+    "DB_DATABASE": "bplkwt6orhq6w1agaool",
+    "DB_USERNAME": "uqlhbgiqnlq1wcpn",
+    "DB_PASSWORD": "sD5BRd0SrN0MTcSHVdSk",
     "SESSION_DRIVER": "cookie",
-    "CACHE_DRIVER": "array",
-    "LOG_CHANNEL": "stderr"
+    "SESSION_LIFETIME": "120",
+    "SESSION_ENCRYPT": "false",
+    "CACHE_STORE": "array",
+    "FILESYSTEM_DISK": "local",
+    "QUEUE_CONNECTION": "sync",
+    "VIEW_COMPILED_PATH": "/tmp",
+    "APP_CONFIG_CACHE": "/tmp/config.php",
+    "APP_EVENTS_CACHE": "/tmp/events.php",
+    "APP_PACKAGES_CACHE": "/tmp/packages.php",
+    "APP_ROUTES_CACHE": "/tmp/routes.php",
+    "APP_SERVICES_CACHE": "/tmp/services.php"
   }
 }
