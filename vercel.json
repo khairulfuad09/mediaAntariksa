@@ -23,5 +23,13 @@
       "src": "/(.*)",
       "dest": "/api/index.php"
     }
-  ]
+  ],
+  "env": {
+    "APP_ENV": "production",
+    "APP_DEBUG": "true",
+    "VIEW_COMPILED_PATH": "/tmp",
+    "SESSION_DRIVER": "cookie",
+    "CACHE_DRIVER": "array",
+    "LOG_CHANNEL": "stderr"
+  }
 }
