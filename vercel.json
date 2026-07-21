@@ -43,12 +43,6 @@
     "SESSION_ENCRYPT": "false",
     "CACHE_STORE": "array",
     "FILESYSTEM_DISK": "local",
-    "QUEUE_CONNECTION": "sync",
-    "VIEW_COMPILED_PATH": "/tmp",
-    "APP_CONFIG_CACHE": "/tmp/config.php",
-    "APP_EVENTS_CACHE": "/tmp/events.php",
-    "APP_PACKAGES_CACHE": "/tmp/packages.php",
-    "APP_ROUTES_CACHE": "/tmp/routes.php",
-    "APP_SERVICES_CACHE": "/tmp/services.php"
+    "QUEUE_CONNECTION": "sync"
   }
 }
